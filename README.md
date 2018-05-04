@@ -1,6 +1,6 @@
 # Curl Collisions
 
-This project provides an efficient implementation of Heilman et al.'s collision attack on Iota's now deprecated hash function, Curl. It can be used to generate novel collisions in the hash funciton in minutes to hours depending on hardware. Please see our report for a detailed coverage of the methodology behind its implementation.
+This project provides an efficient implementation of Heilman et al.'s collision attack on Iota's now-deprecated hash function, Curl. It can be used to generate novel collisions in the hash function in minutes to hours depending on hardware. Please see our report for a detailed coverage of the methodology behind its implementation.
 
 ## Example collisions
 
