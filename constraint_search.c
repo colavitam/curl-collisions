@@ -124,30 +124,35 @@ static inline void mark(struct sbox *sbox, uint8_t *mk) {
 static void *search_thread(void *param) {
   struct constraint_param *constraint_param = (struct constraint_param*) param;
 
+  /* Low entropy RNG seed */
   unsigned int seed = (uint64_t) &constraint_param ^ time(NULL);
 
+  /* Loop until a thread is successful */
   while (!constraint_param->term) {
     int8_t state[STATE_LENGTH];
     int8_t temp[STATE_LENGTH];
     int8_t input[HASH_LENGTH];
 
-    for (int i = 0; i < HASH_LENGTH; i ++) {
+    /* Generate a random input and clear the state */
+    for (int i = 0; i < HASH_LENGTH; i ++)
       input[i] = rand_r(&seed) % 3 - 1;
-    }
     memset(state, 0, STATE_LENGTH);
     memset(temp, 0, STATE_LENGTH);
 
+    /* Hash the random input */
     absorb(input, 0, HASH_LENGTH, state, temp);
 
     // TODO: check this...
     if (state[constraint_param->constraints->flip_idx] == -1)
       goto next;
 
+    /* Verify that output satisfies positional constraints */
     for (int i = 0; i < STATE_LENGTH; i ++)
       if (constraint_param->constraints->bound_values[i] != UNBOUND)
         if (state[i] != constraint_param->constraints->bound_values[i])
           goto next;
 
+    /* Verify that output satisfies S-box constraints */
     struct list *list = constraint_param->constraints->sbox_constraints;
     while (list != NULL) {
       if (check(list->constraint, state) != list->constraint->bound)
@@ -155,6 +160,7 @@ static void *search_thread(void *param) {
       list = list->next;
     }
 
+    /* Constraints satisfied! Print an alert and return the input */
     printf("Constraints satisfied!\n");
 
     char buffer[256];
@@ -168,8 +174,7 @@ static void *search_thread(void *param) {
     memcpy(out + HASH_LENGTH, state, HASH_LENGTH);
     return out;
 
-    next:
-    (void) param;
+    next:;
   }
 
   return NULL;
@@ -179,6 +184,7 @@ struct constraint_set *generate_constraints(int flip_idx) {
   struct constraint_set *constraints = malloc(sizeof(struct constraint_set));
   constraints->flip_idx = flip_idx;
 
+  /* Intiailize all state positions to be unbound */
   for (int i = 0; i < STATE_LENGTH; i ++)
     constraints->bound_values[i] = UNBOUND;
 
@@ -186,14 +192,15 @@ struct constraint_set *generate_constraints(int flip_idx) {
   sboxes[0] = calloc(STATE_LENGTH, sizeof(struct sbox*));
   int a = 0;
 
+  /* Generate the initial round of S-boxes, referencing indexes in the initial state */
   for (int i = 0; i < STATE_LENGTH; i ++) {
     sboxes[0][i] = make_singular(a, a + (a < 365 ? 364 : -365), flip_idx, constraints->bound_values);
     a += a < 365 ? 364 : -365;
   }
 
+  /* Generate subsequent rounds of S-boxes, referencing the prior state */
   for (int i = 1; i < SIM_ROUNDS; i ++) {
     sboxes[i] = calloc(STATE_LENGTH, sizeof(struct sbox*));
-    
     a = 0;
 
     for (int j = 0; j < STATE_LENGTH; j ++) {
@@ -205,6 +212,7 @@ struct constraint_set *generate_constraints(int flip_idx) {
   int constraint_count = 0;
   constraints->sbox_constraints = NULL;
 
+  /* Chain constraints into a list */
   for (int i = 0; i < SIM_ROUNDS; i ++)
     for (int j = 0; j < STATE_LENGTH; j ++)
       if (sboxes[i][j]->bound != UNBOUND) {
@@ -222,6 +230,7 @@ struct constraint_solution *search_constraints(struct constraint_set *constraint
 
   solution->flip_idx = constraints->flip_idx;
 
+  /* Mark restricted indices in the state */
   for (int i = 0; i < STATE_LENGTH; i ++)
     if (constraints->bound_values[i] != UNBOUND)
       solution->restricted[i] = 1;
@@ -229,11 +238,12 @@ struct constraint_solution *search_constraints(struct constraint_set *constraint
       solution->restricted[i] = 0;
 
   struct list *list = constraints->sbox_constraints;
-    while (list != NULL) {
-      mark(list->constraint, solution->restricted);
-      list = list->next;
-    }
+  while (list != NULL) {
+    mark(list->constraint, solution->restricted);
+    list = list->next;
+  }
 
+  /* Spawn search threads to satisfy constraints */
   struct constraint_param params;
   params.constraints = constraints;
   params.term = 0;
