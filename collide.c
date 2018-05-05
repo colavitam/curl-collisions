@@ -12,10 +12,12 @@ static void usage(void) {
 }
 
 int main(int argc, char **argv) {
-  srand(time(NULL));
-
   unsigned num_threads = 4;
 
+  /* Seed RNG for index selection */
+  srand(time(NULL));
+
+  /* Process NUM_THREADS parameters */
   if (argc > 1)
     for (char **arg = argv + 1; *arg != NULL; arg ++) {
       if (!strcmp(*arg, "-t")) {
@@ -42,19 +44,22 @@ int main(int argc, char **argv) {
   while (1) {
     struct constraint_set *constraints;
     struct constraint_solution *solution;
-    int flip_idx = rand() % 243;
+    int flip_idx;
 
-    printf("\nPhase 0:\n");
+    /* Select a random index to flip */
+    flip_idx = rand() % HASH_LENGTH;
+
     /* Create phase 1 constraints */
+    printf("\nPhase 0:\n");
     constraints = generate_constraints(flip_idx);
 
 
-    printf("\nPhase 1:\n");
     /* Solve phase 1 constraints */
+    printf("\nPhase 1:\n");
     solution = search_constraints(constraints, num_threads);
 
-    printf("\nPhase 2:\n");
     /* Brute force phase 2 */
+    printf("\nPhase 2:\n");
     collision_search(solution, num_threads);
   }
 

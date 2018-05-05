@@ -127,17 +127,17 @@ static void *search_thread(void *param) {
   unsigned int seed = (uint64_t) &constraint_param ^ time(NULL);
 
   while (!constraint_param->term) {
-    int8_t state[729];
-    int8_t temp[729];
-    int8_t input[243];
+    int8_t state[STATE_LENGTH];
+    int8_t temp[STATE_LENGTH];
+    int8_t input[HASH_LENGTH];
 
-    for (int i = 0; i < 243; i ++) {
+    for (int i = 0; i < HASH_LENGTH; i ++) {
       input[i] = rand_r(&seed) % 3 - 1;
     }
-    memset(state, 0, 729);
-    memset(temp, 0, 729);
+    memset(state, 0, STATE_LENGTH);
+    memset(temp, 0, STATE_LENGTH);
 
-    absorb(input, 0, 243, state, temp);
+    absorb(input, 0, HASH_LENGTH, state, temp);
 
     // TODO: check this...
     if (state[constraint_param->constraints->flip_idx] == -1)
@@ -158,14 +158,14 @@ static void *search_thread(void *param) {
     printf("Constraints satisfied!\n");
 
     char buffer[256];
-    trytes_from_trits(input, 243, buffer);
+    trytes_from_trits(input, HASH_LENGTH, buffer);
     printf("Fixed Prefix: %s\n", buffer);
-    trytes_from_trits(state, 243, buffer);
+    trytes_from_trits(state, HASH_LENGTH, buffer);
     printf("Mutable Suffix: %s\n", buffer);
     constraint_param->term = 1;
-    int8_t *out = malloc(243 * 2);
-    memcpy(out, input, 243);
-    memcpy(out + 243, state, 243);
+    int8_t *out = malloc(HASH_LENGTH * 2);
+    memcpy(out, input, HASH_LENGTH);
+    memcpy(out + HASH_LENGTH, state, HASH_LENGTH);
     return out;
 
     next:

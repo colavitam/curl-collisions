@@ -19,28 +19,28 @@ void *collide_thread(void *param) {
 
   unsigned int seed = (uint64_t) &parms ^ time(NULL);
   int count = 0;
-  int8_t input[243];
-  int8_t temp[729];
-  int8_t state[729];
-  int8_t s1[729];
-  int8_t s2[729];
+  int8_t input[HASH_LENGTH];
+  int8_t temp[STATE_LENGTH];
+  int8_t state[STATE_LENGTH];
+  int8_t s1[STATE_LENGTH];
+  int8_t s2[STATE_LENGTH];
   while (parms->cnt < 4) {
     count ++;
-    memcpy(input, parms->solution->input + 243, 243);
+    memcpy(input, parms->solution->input + HASH_LENGTH, HASH_LENGTH);
     memcpy(state, parms->initial_state, STATE_LENGTH);
-    for (int i = 0; i < 243; i ++)
+    for (int i = 0; i < HASH_LENGTH; i ++)
       if (!parms->solution->restricted[i])
         input[i] = (rand_r(&seed) % 3) - 1;
 
     input[parms->solution->flip_idx] = 0;
-    absorb_rounds(input, 0, 243, state, temp, BREAK_ROUNDS);
-    memcpy(s1, state, 729);
+    absorb_rounds(input, 0, HASH_LENGTH, state, temp, BREAK_ROUNDS);
+    memcpy(s1, state, STATE_LENGTH);
     memcpy(state, parms->initial_state, STATE_LENGTH);
     input[parms->solution->flip_idx] = 1;
-    absorb_rounds(input, 0, 243, state, temp, BREAK_ROUNDS);
-    memcpy(s2, state, 729);
+    absorb_rounds(input, 0, HASH_LENGTH, state, temp, BREAK_ROUNDS);
+    memcpy(s2, state, STATE_LENGTH);
     int diffs = 0;
-    for (int i = 0; i < 729; i ++)
+    for (int i = 0; i < STATE_LENGTH; i ++)
       if (s1[i] != s2[i])
           diffs ++;
 
@@ -50,33 +50,33 @@ void *collide_thread(void *param) {
     char buffer1[256];
     char buffer2[256];
     input[parms->solution->flip_idx] = 0;
-    trytes_from_trits(parms->solution->input, 243, buffer1);
-    trytes_from_trits(input, 243, buffer2);
+    trytes_from_trits(parms->solution->input, HASH_LENGTH, buffer1);
+    trytes_from_trits(input, HASH_LENGTH, buffer2);
     printf("%s%s\n", buffer1, buffer2);
     input[parms->solution->flip_idx] = 1;
-    trytes_from_trits(input, 243, buffer2);
+    trytes_from_trits(input, HASH_LENGTH, buffer2);
     printf("%s%s\n", buffer1, buffer2);
 
     memcpy(state, parms->initial_state, STATE_LENGTH);
     input[parms->solution->flip_idx] = 0;
-    absorb(input, 0, 243, state, temp);
-    memcpy(s1, state, 729);
+    absorb(input, 0, HASH_LENGTH, state, temp);
+    memcpy(s1, state, STATE_LENGTH);
     memcpy(state, parms->initial_state, STATE_LENGTH);
     input[parms->solution->flip_idx] = 1;
-    absorb(input, 0, 243, state, temp);
-    memcpy(s2, state, 729);
+    absorb(input, 0, HASH_LENGTH, state, temp);
+    memcpy(s2, state, STATE_LENGTH);
     int hash_diffs = 0;
     int state_diffs = 0;
-    for (int i = 0; i < 729; i ++)
+    for (int i = 0; i < STATE_LENGTH; i ++)
       if (s1[i] != s2[i]) {
-        if (i < 243)
+        if (i < HASH_LENGTH)
           hash_diffs ++;
         else
           state_diffs ++;
       }
     if (hash_diffs == 0) {
       printf("Basic collision: hash = ");
-      trytes_from_trits(s1, 243, buffer2);
+      trytes_from_trits(s1, HASH_LENGTH, buffer2);
       printf("%s\n\n", buffer2);
     } else if (state_diffs == 0) {
       printf("Full-state collision prefix\n\n");
@@ -97,7 +97,7 @@ void collision_search(struct constraint_solution *solution, unsigned num_threads
   int8_t initial_state[STATE_LENGTH];
   int8_t temp[STATE_LENGTH];
   memset(initial_state, 0, sizeof(initial_state));
-  absorb(solution->input, 0, 243, initial_state, temp);
+  absorb(solution->input, 0, HASH_LENGTH, initial_state, temp);
 
   struct collide_param parm = {
     .solution = solution,
