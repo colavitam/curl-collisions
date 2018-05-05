@@ -6,7 +6,7 @@
 #include "brute_search.h"
 #include "curl.h"
 #include "converter.h"
-#define BREAK_ROUNDS 12
+#define BREAK_ROUNDS 20
 
 struct collide_param {
   struct constraint_solution *solution;

@@ -7,7 +7,7 @@
 #include "curl.h"
 #include "converter.h"
 #define UNBOUND -2
-#define SIM_ROUNDS 4
+#define SIM_ROUNDS 8
 
 struct sbox {
   int singular:1;
