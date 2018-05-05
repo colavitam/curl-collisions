@@ -14,14 +14,14 @@ static void usage(void) {
 int main(int argc, char **argv) {
   srand(time(NULL));
 
-  int num_threads = 4;
+  unsigned num_threads = 4;
 
   if (argc > 1)
     for (char **arg = argv + 1; *arg != NULL; arg ++) {
       if (!strcmp(*arg, "-t")) {
         if (*(++arg) != NULL) {
           char *end;
-          num_threads = strtol(*arg, &end, 0);
+          num_threads = strtoul(*arg, &end, 0);
           if (*end != '\0')
             usage();
         } else {
@@ -31,6 +31,11 @@ int main(int argc, char **argv) {
         usage();
       }
     }
+
+  if (num_threads == 0 || num_threads > 2048) {
+    printf("Error: NUM_THREADS is outside the range [0, 2048]\n");
+    exit(1);
+  }
 
   printf("Using %d threads\n", num_threads);
 

@@ -3,6 +3,6 @@
 
 #include "constraint_search.h"
 
-void collision_search(struct constraint_solution *solution, int num_threads);
+void collision_search(struct constraint_solution *solution, unsigned num_threads);
 
 #endif

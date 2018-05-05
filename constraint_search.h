@@ -12,5 +12,5 @@ struct constraint_solution {
 struct constraint_set;
 
 struct constraint_set *generate_constraints(int flip_idx);
-struct constraint_solution *search_constraints(struct constraint_set *constraints, int num_threads);
+struct constraint_solution *search_constraints(struct constraint_set *constraints, unsigned num_threads);
 #endif

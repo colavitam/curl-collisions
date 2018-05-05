@@ -217,7 +217,7 @@ struct constraint_set *generate_constraints(int flip_idx) {
   return constraints;
 }
 
-struct constraint_solution *search_constraints(struct constraint_set *constraints, int num_threads) {
+struct constraint_solution *search_constraints(struct constraint_set *constraints, unsigned num_threads) {
   struct constraint_solution *solution = malloc(sizeof(struct constraint_solution));
 
   solution->flip_idx = constraints->flip_idx;

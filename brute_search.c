@@ -93,7 +93,7 @@ void *collide_thread(void *param) {
   return NULL;
 }
 
-void collision_search(struct constraint_solution *solution, int num_threads) {
+void collision_search(struct constraint_solution *solution, unsigned num_threads) {
   int8_t initial_state[STATE_LENGTH];
   int8_t temp[STATE_LENGTH];
   memset(initial_state, 0, sizeof(initial_state));
