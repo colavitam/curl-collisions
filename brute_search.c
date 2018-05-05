@@ -15,7 +15,7 @@ struct collide_param {
   volatile int cnt;
 };
 
-void *collide_thread(void *param) {
+static void *collide_thread(void *param) {
   struct collide_param *parms = (struct collide_param*) param;
 
   /* Low entropy RNG seed */
