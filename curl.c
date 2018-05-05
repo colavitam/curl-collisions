@@ -20,12 +20,8 @@ static void transform(int8_t *state, int8_t *temp, unsigned rounds) {
         memcpy(temp, state, STATE_LENGTH * sizeof(int8_t));
         for(int32_t s = 0; s < STATE_LENGTH; s++) {
             p = t;
-            if(t < 365) {
-                t += 364;
-            }
-            else {
-                t -= 365;
-            }
+            t += 364;
+            t %= STATE_LENGTH;
             state[s] = TRUTH_TABLE[temp[p] + (temp[t] << 2) + 5];
         }
     }
