@@ -1,6 +1,7 @@
 #ifndef _CONSTRAINT_SEARCH_H
 #define _CONSTRAINT_SEARCH_H
 
+#include <stdint.h>
 #include "curl.h"
 
 struct constraint_solution {

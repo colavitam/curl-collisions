@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
+#include <stdint.h>
 #include "brute_search.h"
 #include "curl.h"
 #include "converter.h"

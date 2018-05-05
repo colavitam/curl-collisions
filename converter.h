@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #define HASH_LENGTH 243
 #define TRYTE_SPACE 27

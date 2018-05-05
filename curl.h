@@ -1,6 +1,8 @@
 #ifndef _CURL_H
 #define _CURL_H
 
+#include <stdint.h>
+
 #define HASH_LENGTH     243
 #define STATE_LENGTH    (3*HASH_LENGTH)
 #define HALF_LENGTH     (STATE_LENGTH/2)
