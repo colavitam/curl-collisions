@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  *
- * Adopted from https://github.com/iotaledger/ccurl/blob/master/src/lib/util/converter.c
+ * Adapted from https://github.com/iotaledger/ccurl/blob/master/src/lib/util/converter.c
  */
 
 #include <string.h>
