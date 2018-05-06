@@ -39,8 +39,13 @@ struct constraint_set {
 };
 
 struct constraint_param {
-  struct constraint_set *constraints;
+  struct constraint_set **constraints;
   volatile uint8_t term;
+};
+
+struct constraint_result {
+  int8_t *message;
+  int flip_idx;
 };
 
 static struct list *list_append(struct list *list, struct sbox *sbox) {
@@ -142,39 +147,43 @@ static void *search_thread(void *param) {
     /* Hash the random input */
     absorb(input, 0, HASH_LENGTH, state, temp);
 
-    // TODO: check this...
-    if (state[constraint_param->constraints->flip_idx] == -1)
-      goto next;
-
-    /* Verify that output satisfies positional constraints */
-    for (int i = 0; i < STATE_LENGTH; i ++)
-      if (constraint_param->constraints->bound_values[i] != UNBOUND)
-        if (state[i] != constraint_param->constraints->bound_values[i])
-          goto next;
-
-    /* Verify that output satisfies S-box constraints */
-    struct list *list = constraint_param->constraints->sbox_constraints;
-    while (list != NULL) {
-      if (check(list->constraint, state) != list->constraint->bound)
+    for (int p = 0; p < HASH_LENGTH; p ++) {
+      // TODO: check this...
+      if (state[constraint_param->constraints[p]->flip_idx] == -1)
         goto next;
-      list = list->next;
+
+      /* Verify that output satisfies positional constraints */
+      for (int i = 0; i < STATE_LENGTH; i ++)
+        if (constraint_param->constraints[p]->bound_values[i] != UNBOUND)
+          if (state[i] != constraint_param->constraints[p]->bound_values[i])
+            goto next;
+
+      /* Verify that output satisfies S-box constraints */
+      struct list *list = constraint_param->constraints[p]->sbox_constraints;
+      while (list != NULL) {
+        if (check(list->constraint, state) != list->constraint->bound)
+          goto next;
+        list = list->next;
+      }
+
+      /* Constraints satisfied! Print an alert and return the input */
+      printf("Constraints satisfied!\n");
+
+      struct constraint_result *result = malloc(sizeof(struct constraint_result));
+      char buffer[256];
+      trytes_from_trits(input, HASH_LENGTH, buffer);
+      printf("Fixed Prefix: %s\n", buffer);
+      trytes_from_trits(state, HASH_LENGTH, buffer);
+      printf("Mutable Suffix: %s\n", buffer);
+      constraint_param->term = 1;
+      result->message = malloc(HASH_LENGTH * 2);
+      result->flip_idx = p;
+      memcpy(result->message, input, HASH_LENGTH);
+      memcpy(result->message + HASH_LENGTH, state, HASH_LENGTH);
+      return result;
+
+      next:;
     }
-
-    /* Constraints satisfied! Print an alert and return the input */
-    printf("Constraints satisfied!\n");
-
-    char buffer[256];
-    trytes_from_trits(input, HASH_LENGTH, buffer);
-    printf("Fixed Prefix: %s\n", buffer);
-    trytes_from_trits(state, HASH_LENGTH, buffer);
-    printf("Mutable Suffix: %s\n", buffer);
-    constraint_param->term = 1;
-    int8_t *out = malloc(HASH_LENGTH * 2);
-    memcpy(out, input, HASH_LENGTH);
-    memcpy(out + HASH_LENGTH, state, HASH_LENGTH);
-    return out;
-
-    next:;
   }
 
   return NULL;
@@ -209,39 +218,19 @@ struct constraint_set *generate_constraints(int flip_idx) {
     }
   }
 
-  int constraint_count = 0;
   constraints->sbox_constraints = NULL;
 
   /* Chain constraints into a list */
   for (int i = 0; i < SIM_ROUNDS; i ++)
     for (int j = 0; j < STATE_LENGTH; j ++)
-      if (sboxes[i][j]->bound != UNBOUND) {
+      if (sboxes[i][j]->bound != UNBOUND)
         constraints->sbox_constraints = list_append(constraints->sbox_constraints, sboxes[i][j]);
-        constraint_count ++;
-      }
-
-  printf("%d S-box constraints generated.\n", constraint_count);
 
   return constraints;
 }
 
-struct constraint_solution *search_constraints(struct constraint_set *constraints, unsigned num_threads) {
+struct constraint_solution *search_constraints(struct constraint_set **constraints, unsigned num_threads) {
   struct constraint_solution *solution = malloc(sizeof(struct constraint_solution));
-
-  solution->flip_idx = constraints->flip_idx;
-
-  /* Mark restricted indices in the state */
-  for (int i = 0; i < STATE_LENGTH; i ++)
-    if (constraints->bound_values[i] != UNBOUND)
-      solution->restricted[i] = 1;
-    else
-      solution->restricted[i] = 0;
-
-  struct list *list = constraints->sbox_constraints;
-  while (list != NULL) {
-    mark(list->constraint, solution->restricted);
-    list = list->next;
-  }
 
   /* Spawn search threads to satisfy constraints */
   struct constraint_param params;
@@ -255,9 +244,26 @@ struct constraint_solution *search_constraints(struct constraint_set *constraint
 
   for (int i = 0; i < num_threads; i ++) {
     void *result;
+    struct constraint_result *c_result;
     pthread_join(pts[i], &result);
-    if (result != NULL)
-      solution->input = (int8_t*) result;
+    if (result != NULL) {
+      c_result = (struct constraint_result *) result;
+      solution->input = c_result->message;
+      solution->flip_idx = c_result->flip_idx;
+    }
+  }
+
+  /* Mark restricted indices in the state */
+  for (int i = 0; i < STATE_LENGTH; i ++)
+    if (constraints[solution->flip_idx]->bound_values[i] != UNBOUND)
+      solution->restricted[i] = 1;
+    else
+      solution->restricted[i] = 0;
+
+  struct list *list = constraints[solution->flip_idx]->sbox_constraints;
+  while (list != NULL) {
+    mark(list->constraint, solution->restricted);
+    list = list->next;
   }
 
   return solution;

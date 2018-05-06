@@ -40,19 +40,17 @@ int main(int argc, char **argv) {
   }
 
   printf("Using %d threads\n", num_threads);
+  struct constraint_set *constraints[HASH_LENGTH];
+
+  /* Create phase 1 constraints */
+  printf("\nPhase 0:\n");
+  for (int i = 0; i < HASH_LENGTH; i ++)
+    constraints[i] = generate_constraints(i);
+
+  printf("Generated %d constraint sets.\n", HASH_LENGTH);
 
   while (1) {
-    struct constraint_set *constraints;
     struct constraint_solution *solution;
-    int flip_idx;
-
-    /* Select a random index to flip */
-    flip_idx = rand() % HASH_LENGTH;
-
-    /* Create phase 1 constraints */
-    printf("\nPhase 0:\n");
-    constraints = generate_constraints(flip_idx);
-
 
     /* Solve phase 1 constraints */
     printf("\nPhase 1:\n");
