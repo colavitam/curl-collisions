@@ -1,6 +1,6 @@
 # Curl Collisions
 
-This project provides an efficient implementation of Heilman et al.'s collision attack on IOTA's now-deprecated hash function, Curl. It can be used to generate novel collisions in the hash function in minutes to hours depending on hardware. Please see our report for a detailed coverage of the methodology behind its implementation.
+This project provides an efficient implementation of Heilman et al.'s collision attack on IOTA's now-deprecated hash function, Curl. It can be used to generate novel collisions in the hash function in minutes to hours depending on hardware. Please see our [report](https://github.com/colavitam/curl-collisions/raw/master/paper.pdf) for a detailed coverage of the methodology behind its implementation.
 
 ## Usage
 To generate collisions using this project, clone the repository locally and build with `make`. Start the program with `./collide -t NUM_THREADS` where `NUM_THREADS` is the suitable number of threads for your machine.
