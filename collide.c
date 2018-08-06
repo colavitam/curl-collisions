@@ -39,26 +39,31 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  printf("Using %d threads\n", num_threads);
+  printf("Using %d threads\n\n", num_threads);
   struct constraint_set *constraints[HASH_LENGTH];
 
-  /* Create phase 1 constraints */
-  printf("\nPhase 0:\n");
-  for (int i = 0; i < HASH_LENGTH; i ++)
-    constraints[i] = generate_constraints(i);
+  for (unsigned p = 0; p < HASH_LENGTH; p ++) {
+    printf("Measuring for position %d\n", p);
 
-  printf("Generated %d constraint sets.\n", HASH_LENGTH);
+    struct timespec start, end;
 
-  while (1) {
+    clock_gettime(CLOCK_REALTIME, &start);
+
+    constraints[p] = generate_constraints(p);
+
     struct constraint_solution *solution;
 
     /* Solve phase 1 constraints */
-    printf("\nPhase 1:\n");
-    solution = search_constraints(constraints, num_threads);
+    solution = search_constraints(constraints, num_threads, p);
 
     /* Brute force phase 2 */
-    printf("\nPhase 2:\n");
     collision_search(solution, num_threads);
+
+    clock_gettime(CLOCK_REALTIME, &end);
+
+    double elapsed = end.tv_sec - start.tv_sec + (end.tv_nsec - start.tv_nsec) / 1000000000.0;
+
+    printf("Time elapsed: %f seconds\n", elapsed);
   }
 
   return 0;

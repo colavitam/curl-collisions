@@ -29,8 +29,8 @@ static void *collide_thread(void *param) {
   char buffer1[256];
   char buffer2[256];
 
-  /* Loop until 4 candidate collisions are found across threads */
-  while (parms->cnt < 4) {
+  /* Loop until 1 candidate collision are found across threads */
+  while (parms->cnt < 1) {
     /* Initialize input to the result of the constraint solver */
     memcpy(input, parms->solution->input + HASH_LENGTH, HASH_LENGTH);
 
@@ -68,10 +68,8 @@ static void *collide_thread(void *param) {
     input[parms->solution->flip_idx] = 0;
     trytes_from_trits(parms->solution->input, HASH_LENGTH, buffer1);
     trytes_from_trits(input, HASH_LENGTH, buffer2);
-    printf("%s%s\n", buffer1, buffer2);
     input[parms->solution->flip_idx] = 1;
     trytes_from_trits(input, HASH_LENGTH, buffer2);
-    printf("%s%s\n", buffer1, buffer2);
 
     /* Run the hashing algorithm on the candidate collision and store the results */
     memcpy(state, parms->initial_state, STATE_LENGTH);
@@ -94,17 +92,10 @@ static void *collide_thread(void *param) {
       }
 
     /* Determine the type of collision */
-    if (hash_diffs == 0) {
-      printf("Basic collision: hash = ");
-      trytes_from_trits(s1, HASH_LENGTH, buffer2);
-      printf("%s\n\n", buffer2);
-    } else if (state_diffs == 0) {
-      printf("Full-state collision prefix\n\n");
-    } else {
-      printf("Dud collision\n\n");
+    if (state_diffs == 0) {
+      /* Full state collision */
+      parms->cnt ++;
     }
-
-    parms->cnt ++;
 
     next:;
   }
